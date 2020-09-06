@@ -21,7 +21,7 @@ userSchema.plugin(encrypt, {
 // <==
 
 Using dotenv.
-Steps-
+### Steps-
 1. Using NPM dotenv.
 2. Create .env file, and add secret keys there.
 3. add this at top of app.js file- 
@@ -44,8 +44,23 @@ userSchema.plugin(encrypt, {
 ## Level 3: 
 Using md5 hashing.(negative- hasing attack).
 
-Steps -
+### Steps -
 const md5 = require('md5');
 
 const password = md5(req.body.password);
 
+## Level 4:
+Using bcrypt.
+### Steps -
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
+Register -
+bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+// code here
+})
+
+Login - 
+bcrypt.compare(req.body.password, foundUser.password, function(err, result) {
+// code here
+})
