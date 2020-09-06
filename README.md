@@ -21,4 +21,22 @@ userSchema.plugin(encrypt, {
 // <==
 
 ## Level 3: 
+Using dotenv.
+Steps-
+1. Using NPM dotenv.
+2. Create .env file, and add secret keys there.
+3. add this at top of app.js file- 
+  require('dotenv').config();
+4. accessing using process.env -
 
+// Level 3 Authentication ==>
+const userSchema = new mongoose.Schema({
+  email: String,
+  password: String
+});
+
+userSchema.plugin(encrypt, {
+  secret: process.env.SECRET,
+  encryptedFields: ['password']
+});
+// <==
