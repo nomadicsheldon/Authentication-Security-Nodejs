@@ -20,7 +20,6 @@ userSchema.plugin(encrypt, {
 });
 // <==
 
-## Level 3: 
 Using dotenv.
 Steps-
 1. Using NPM dotenv.
@@ -29,7 +28,7 @@ Steps-
   require('dotenv').config();
 4. accessing using process.env -
 
-// Level 3 Authentication ==>
+// Level 2 Authentication ==>
 const userSchema = new mongoose.Schema({
   email: String,
   password: String
@@ -40,3 +39,7 @@ userSchema.plugin(encrypt, {
   encryptedFields: ['password']
 });
 // <==
+ 5. always add .env in .gitignore.
+
+## Level 3: 
+
