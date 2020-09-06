@@ -42,4 +42,10 @@ userSchema.plugin(encrypt, {
  5. always add .env in .gitignore.
 
 ## Level 3: 
+Using md5 hashing.
+
+Steps -
+const md5 = require('md5');
+
+const password = md5(req.body.password);
 
