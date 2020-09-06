@@ -4,7 +4,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-const md5 = require('md5');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 // ############################## setting up frameworks ##############################
 const app = express();
@@ -48,25 +49,26 @@ app.get('/login', function(req, res) {
 
 app.post('/login', function(req, res) {
   const userName = req.body.username;
-  // Level 3 ==>
-  const password = md5(req.body.password);
-  // <==
+  // Level 4 ==>
+  const password = req.body.password;
   User.findOne({
     email: userName
   }, function(err, foundUser) {
     if (!err) {
       if (foundUser) {
-        if (foundUser.password === password) {
-          res.render('secrets');
-        } else {
-          res.redirect('/');
-        }
+        bcrypt.compare(password, foundUser.password, function(err, result) {
+          if (result === true) {
+            res.render('secrets');
+          } else {
+            res.redirect('/');
+          }
+        });
       }
     } else {
       console.log(err);
     }
   });
-
+  // <==
 });
 
 // ############################## Register route ##############################
@@ -75,19 +77,21 @@ app.get('/register', function(req, res) {
 });
 
 app.post('/register', function(req, res) {
-  const newUser = new User({
-    email: req.body.username,
-    // Level 3 ==>
-    password: md5(req.body.password)
-    // <==
+  // Level 4 ==>
+  bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+    const newUser = new User({
+      email: req.body.username,
+      password: hash
+    });
+    newUser.save(function(err) {
+      if (!err) {
+        res.render('secrets');
+      } else {
+        console.log(err);
+      }
+    });
   });
-  newUser.save(function(err) {
-    if (!err) {
-      res.render('secrets');
-    } else {
-      console.log(err);
-    }
-  });
+  // <==
 
 });
 
