@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
+const encrypt = require('mongoose-encryption');
 
 // ############################## setting up frameworks ##############################
 const app = express();
@@ -28,10 +29,18 @@ mongoose.connect(url + "/" + dbName, {
   useNewUrlParser: true
 });
 
-const userSchema = {
+// Level 2 Authentication ==>
+const userSchema = new mongoose.Schema({
   email: String,
   password: String
-};
+});
+
+const secret = 'ThisIsSecretKey';
+userSchema.plugin(encrypt, {
+  secret: secret,
+  encryptedFields: ['password']
+});
+// <==
 
 const User = mongoose.model('User', userSchema);
 
@@ -48,7 +57,9 @@ app.get('/login', function(req, res) {
 app.post('/login', function(req, res) {
   const userName = req.body.username;
   const password = req.body.password;
-  User.findOne({email: userName}, function(err, foundUser) {
+  User.findOne({
+    email: userName
+  }, function(err, foundUser) {
     if (!err) {
       if (foundUser) {
         if (foundUser.password === password) {
