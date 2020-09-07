@@ -4,8 +4,12 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
+
+// Level 5 ==>
+const session = require('express-session');
+const passport = require('passport');
+const passportLocalMongoose = require('passport-local-mongoose');
+// <==
 
 // ############################## setting up frameworks ##############################
 const app = express();
@@ -16,6 +20,17 @@ app.use(bodyParser.urlencoded({
   extended: true
 }));
 app.use(express.static("public"));
+
+// Level 5 ==>
+app.use(session({
+  secret: 'MyScretFileHere.',
+  resave: false,
+  saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+// <==
 
 //######################## mongoose setup with dbName ########################
 // connection URL
@@ -30,12 +45,27 @@ mongoose.connect(url + "/" + dbName, {
   useNewUrlParser: true
 });
 
+// Level 5 ==>
+mongoose.set('useCreateIndex', true);
+// <==
+
 const userSchema = new mongoose.Schema({
   email: String,
   password: String
 });
 
+// Level 5 ==>
+userSchema.plugin(passportLocalMongoose);
+// <==
+
 const User = mongoose.model('User', userSchema);
+
+// Level 5 ==>
+passport.use(User.createStrategy());
+
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+// <==
 
 // ############################## Home route ##############################
 app.get('/', function(req, res) {
@@ -48,27 +78,21 @@ app.get('/login', function(req, res) {
 });
 
 app.post('/login', function(req, res) {
-  const userName = req.body.username;
-  // Level 4 ==>
-  const password = req.body.password;
-  User.findOne({
-    email: userName
-  }, function(err, foundUser) {
+  // Level 5 ==>
+  const user = new User({
+    username: req.body.username,
+    password: req.body.password
+  });
+  req.login(user, function(err) {
     if (!err) {
-      if (foundUser) {
-        bcrypt.compare(password, foundUser.password, function(err, result) {
-          if (result === true) {
-            res.render('secrets');
-          } else {
-            res.redirect('/');
-          }
-        });
-      }
+      passport.authenticate('local')(req, res, function(){
+        res.redirect('/secrets');
+      });
     } else {
       console.log(err);
     }
   });
-  // <==
+// <==
 });
 
 // ############################## Register route ##############################
@@ -77,23 +101,36 @@ app.get('/register', function(req, res) {
 });
 
 app.post('/register', function(req, res) {
-  // Level 4 ==>
-  bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
-    const newUser = new User({
-      email: req.body.username,
-      password: hash
-    });
-    newUser.save(function(err) {
-      if (!err) {
-        res.render('secrets');
-      } else {
-        console.log(err);
-      }
-    });
+// Level 5 ==>
+  User.register({username: req.body.username}, req.body.password, function(err, user) {
+    if (!err) {
+      passport.authenticate('local')(req, res, function(){
+        res.redirect('/secrets');
+      });
+    } else {
+      console.log(err);
+      res.redirect('/register');
+    }
   });
-  // <==
-
+// <==
 });
+
+// ############################## Secret route ##############################
+// Level 5 ==>
+app.get('/secrets', function(req, res) {
+  if (req.isAuthenticated()){
+    res.render('secrets');
+  } else {
+    res.redirect('/login');
+  }
+});
+
+// ############################## Logout route ##############################
+app.get('/logout', function(req, res) {
+  req.logout();
+  res.redirect("/");
+});
+// <==
 
 // ############################## port setting ##############################
 app.listen(3000, function() {
