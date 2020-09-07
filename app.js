@@ -69,7 +69,8 @@ mongoose.set('useCreateIndex', true);
 const userSchema = new mongoose.Schema({
   email: String,
   password: String,
-  googleId: String
+  googleId: String,
+  secret: String
 });
 // <==
 userSchema.plugin(passportLocalMongoose);
@@ -86,7 +87,7 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(id, done) {
-  User.findById(id, function (err, user) {
+  User.findById(id, function(err, user) {
     done(err, user);
   });
 });
@@ -141,11 +142,15 @@ app.post('/register', function(req, res) {
 
 // ############################## Secret route ##############################
 app.get('/secrets', function(req, res) {
-  if (req.isAuthenticated()) {
-    res.render('secrets');
-  } else {
-    res.redirect('/login');
-  }
+  User.find({'secret':{$ne: null}}, function(err, foundUsers){
+    if (!err) {
+      if (foundUsers) {
+        res.render('secrets', {usersWithSecrets: foundUsers});
+      }
+    } else {
+      console.log(err);
+    }
+  });
 });
 
 // ############################## Logout route ##############################
@@ -169,6 +174,31 @@ app.get('/auth/google/secrets',
     res.redirect('/secrets');
   });
 
+// ############################## submit route ##############################
+app.get('/submit', function(req, res) {
+  if (req.isAuthenticated()) {
+    res.render('submit');
+  } else {
+    res.redirect('/login');
+  }
+});
+
+
+app.post('/submit', function(req, res) {
+  const submittedSecret = req.body.secret;
+  User.findById(req.user.id, function(err, foundUser) {
+    if (!err) {
+      if (foundUser) {
+        foundUser.secret = submittedSecret;
+        foundUser.save(function(){
+          res.redirect('/secrets');
+        });
+      }
+    } else {
+      console.log(err);
+    }
+  });
+});
 // ############################## port setting ##############################
 app.listen(3000, function() {
   console.log("Listening for Secret App started on port 3000");
