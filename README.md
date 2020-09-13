@@ -28,7 +28,7 @@ Using dotenv.
   require('dotenv').config();
 4. accessing using process.env -
 
-// Level 2 Authentication ==>
+#### Code-
 ```javascript
 const userSchema = new mongoose.Schema({
   email: String,
@@ -40,7 +40,6 @@ userSchema.plugin(encrypt, {
   encryptedFields: ['password']
 });
 ```
-// <==
  5. always add .env in .gitignore.
 
 ## Level 3: 
